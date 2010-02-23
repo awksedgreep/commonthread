@@ -1,9 +1,0 @@
-
-class <%= $classname %> < ActiveRecord::Base
-   # Common options:
-
-   # To establish your own DB params for THIS MODEL ONLY
-   #establish_connection(:database => 'commonthread', :adapter => 'mysql', :username => 'root', :password => '')
-
-   # Any and all ActiveRecord options available in CommonThread
-end
