@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+
+pwd = File.expand_path(File.dirname(__FILE__))
+
+newdir = Dir.getwd << "/" << ARGV[0].to_s
+Dir.mkdir(newdir)
+Dir.chdir(newdir)
+system("rake -f #{pwd.to_s << "/Rakefile"} skel")

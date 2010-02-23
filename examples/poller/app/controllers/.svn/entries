@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="8"
+   name=""
+   committed-date="2006-09-29T07:38:27.299673Z"
+   url="svn+ssh://mcotner.com/repos/commonthread/trunk/examples/poller/app/controllers"
+   last-author="mcotner"
+   kind="dir"
+   uuid="3294766b-4b19-0410-a5d8-ca4dfbd59a75"
+   repos="svn+ssh://mcotner.com/repos/commonthread"
+   revision="16"/>
+<entry
+   committed-rev="8"
+   name="master.rb"
+   text-time="2006-09-30T06:23:48.000000Z"
+   committed-date="2006-09-29T07:38:27.299673Z"
+   checksum="e2514b49ec323404c6ee5977ae32a6a9"
+   last-author="mcotner"
+   kind="file"
+   prop-time="2006-09-30T06:23:48.000000Z"/>
+</wc-entries>

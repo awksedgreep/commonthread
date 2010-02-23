@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+
+require 'drb'
+pwd = File.dirname(__FILE__)
+require "#{pwd}/../environment"
+
+Dir["#{pwd}/../app/startup/*.rb"].each do |file|
+  load "#{file}"
+end
+
+if ARGV[0] == '--help'
+   print "Usage: script/drb_server <bind_ip> <port> <ControllerClass> <InstanceName>"
+   exit
+end
+
+bind_ip = ARGV[0] || 'localhost'
+port = ARGV[1] || 5750
+classname = ARGV[2] || 'Controller'
+instancename = ARGV[3] || 'controller'
+
+Kernel.const_get(classname).new
+
+connect_string = "druby://#{bind_ip}:#{port}"
+puts connect_string
+DRb.start_service(connect_string, $controllers)
+DRb.thread.join

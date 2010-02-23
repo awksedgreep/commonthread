@@ -1,0 +1,8 @@
+# Consumers generally read from queues, but are not limited to that
+class <%= $classname %>Task < Task
+   # Most functionality is built in, but you will likely want to overload/replace event_loop method
+   #def event_loop
+   #   every 5.minutes
+   #   puts "do my stuff here"
+   #end
+end
