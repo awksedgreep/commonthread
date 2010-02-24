@@ -9,10 +9,10 @@ Rake::TestTask.new do |test|
 end
 
 # package target
-PKG_VERSION = '0.1.23'
+PKG_VERSION = '0.1.29'
 PKG_FILES = FileList[
     'Rakefile',
-    'README',
+    'README.rdoc',
     'bin/*',
     'lib/**/*.rb',
     'generators/*.rhtml',
@@ -32,15 +32,15 @@ spec = Gem::Specification.new do |s|
     s.executables = ['commonthread', 'generate']
     s.default_executable = 'commonthread'
     s.has_rdoc = true
-    s.extra_rdoc_files = ['README']    
-    s.rdoc_options << '--main' << 'README' <<
+    s.extra_rdoc_files = ['README.rdoc']    
+    s.rdoc_options << '--main' << 'README.rdoc' <<
                       '--title' << 'CommonThread Framework' <<
                       '--inline-source' << '--line-numbers'
     s.description = "CommonThread facilitates the creation of producer consumer threads in an facilitative environment with built in queue management, intelligent startup/shutdown, and rails like simplicity.  It should lower the barrier to entry for writing complex threaded data processing applications and middleware."
     s.author = 'Mark Cotner'
     s.email = 'mark.cotner@gmail.com'
     #s.rubyforge_project = 'commonthread'
-    s.homepage = 'http://commonthread.mcotner.com'
+    s.homepage = 'http://www.github.com/awksedgreep/commonthread'
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|

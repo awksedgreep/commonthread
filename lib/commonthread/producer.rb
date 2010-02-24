@@ -6,7 +6,7 @@
 # a queue
 class Producer
 
-   DefaultConfig = { :q => nil, :num_threads => 10, :log => $log }
+   DefaultConfig = { :q => nil, :num_threads => 10 }
    attr_reader :q, :threads, :num_threads, :jobs_processed, :config
 
    # standard config options are :q, :num_threads (default => 10), :log (default => $log)

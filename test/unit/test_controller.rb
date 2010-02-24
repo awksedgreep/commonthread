@@ -64,10 +64,10 @@ class ControllerTest < Test::Unit::TestCase
     assert_kind_of Hash, @c.consumers
     assert_kind_of Hash, @c.producers
     assert_kind_of Hash, @c.queues
-    assert_not_nil $controllers
-    assert_kind_of Array, $controllers
-    assert !$controllers.empty?
-    assert $controllers.length > 0
+    #assert_not_nil $controllers
+    #assert_kind_of Array, $controllers
+    #assert !$controllers.empty?
+    #assert $controllers.length > 0
   end
   
   def test_controller_status

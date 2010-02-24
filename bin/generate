@@ -25,7 +25,7 @@ def generate(basedir, generator = nil)
 end
 
 case $generator
-  when "controller" then generate("app/controllers")
+  #when "controller" then generate("app/controllers")
   when "producer" then generate("app/producers")
   when "consumer" then generate("app/consumers")
   when "logger" then generate("app/loggers")
@@ -33,7 +33,7 @@ case $generator
   when "startup" then generate("app/startup")
   when "task" then generate("app/tasks", "task")
   when "scaffold" then
-     generate("app/controllers", "controller")
+     #generate("app/controllers", "controller")
      generate("app/producers", "producer")
      generate("app/consumers", "consumer")
      generate("app/tasks", "task")
@@ -47,5 +47,5 @@ case $generator
 end
 
 def usage
-   puts "generate (controller|producer|consumer|task|logger|model|startup|scaffold) classname"
+   puts "generate (producer|consumer|task|logger|model|startup|scaffold) classname"
 end

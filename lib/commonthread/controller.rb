@@ -6,8 +6,9 @@ require 'drb'
 class Controller
    include DRbUndumped
 
-   DefaultConfig = { :log => $log }
-   attr_accessor :queues, :producers, :consumers, :log, :config
+   DefaultConfig = { :log => $log, :application => 'CommonThread' }
+   # Default q is the last queue added
+   attr_accessor :queues, :producers, :consumers, :log, :config, :default_q, :application
 
    def initialize(config = {})
       @config = DefaultConfig.merge(config)
@@ -15,13 +16,13 @@ class Controller
       @producers = {}
       @consumers = {}
       @log = @config[:log]
+      @application = config[:application]
       if @log.nil?
-         @log = Log.new(:application => 'CommonThread', :log_level => Logger::DEBUG)
+         @log = Log.new(:application => @application, :log_level => Logger::DEBUG)
          @logconsumer = LogConsumer.new(@log, STDOUT)
       end
       # Register controller
-      $controllers = [] if $controllers.nil?
-      $controllers << self
+      $controller = self
       trap "TERM", proc { shutdown }
       trap "KILL", proc { kill }
    end
@@ -45,16 +46,23 @@ class Controller
       }
    end
 
-   # Add a named queue
+   # Add a named queue, would like to deprecate this, but currently gives more control and allows
+   # for create of SizedQueue, etc . . . anything that implements a queue like interface can be
+   # used here
    def add_q(name, q = nil)
       @log.info("Controller: Adding Queue: #{name}")
       @queues[name] = Queue.new if q.nil?
+      @default_q = @queues[name]
    end
    
    # Factory for queues, nice for DRb so there's no confusion as to where the object is instantiated
    def create_q(name)
       @log.info("Controller: Creating Queue: #{name}")
       add_q(name)
+   end
+   
+   def find_q_by_name(name)
+      @queues[name]
    end
 
    # Delete a named queue
@@ -64,6 +72,7 @@ class Controller
       @log.info("Controller: Deleting Queue: #{name}")
       @queues.delete(name)
    end
+   alias :delete_q :del_q
 
    # Get queue status
    def q_status
@@ -75,10 +84,28 @@ class Controller
       res
    end
 
-   # Add a named producer
+   # Add a named producer --deprecated in favor of create_producer factory
    def add_producer(name, producer)
       @log.info("Controller: Adding Producer: #{name}")
       @producers[name] = producer
+   end
+   
+   # Start a producer thread pool - please make sure you pass a :name
+   # This might be a good place to try an anonymous proc/block passthru(someday)
+   def create_producer(classname = nil, config = {})
+      classname = Producer if classname.nil?
+      # Set some optional defaults
+      config[:q] = @default_q if config[:q].nil?
+      config[:log] = @log if config[:log].nil?
+      @log.info("Controller: Adding Producer: #{config[:name]} of Klass #{classname}")
+      config[:num_threads] = 1 if config[:num_threads].nil?
+      return nil if config[:name].nil?
+      @producers[config[:name]] = classname.new(config)
+   end
+   
+   # Return handle for producer by name
+   def find_producer_by_name(name)
+      @producers[name]
    end
 
    # Delete a named producer -- User is expected to shut it down first, however in the future
@@ -142,6 +169,24 @@ class Controller
    def add_consumer(name, consumer)
       @log.info("Controller: Adding Consumer: #{name}")
       @consumers[name] = consumer
+   end
+
+   # Start a consumer thread pool - please make sure you pass a :name
+   # This might be a good place to try an anonymous proc/block passthru(someday)
+   def create_consumer(classname = nil, config = {})
+      classname = Consumer if classname.nil?
+      # Set some optional defaults
+      config[:q] = @default_q if config[:q].nil?
+      config[:log] = @log if config[:log].nil?
+      @log.info("Controller: Adding Consumer: #{config[:name]} of Klass #{classname}")
+      config[:num_threads] = 1 if config[:num_threads].nil?
+      return nil if config[:name].nil?
+      @consumers[config[:name]] = classname.new(config)
+   end
+   
+   # Return handle for consumer by name
+   def find_consumer_by_name(name)
+      @consumers[name]
    end
 
    # Delete a named consumer thread group
