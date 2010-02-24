@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "Loading CommonThread Environment . . . "
+jirb --prompt-mode simple -r 'irb/completion' -r pp -r environment $*

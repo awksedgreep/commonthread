@@ -11,12 +11,18 @@ task :skel do
    copy __FILE__, Dir.getwd
    copy rakefile_wd + "/../framework/console", Dir.getwd << "/script"
    chmod 0755, Dir.getwd << "/script/console"
+   copy rakefile_wd + "/../framework/jirb_console", Dir.getwd << "/script"
+   chmod 0755, Dir.getwd << "/script/jirb_console"
    copy rakefile_wd + "/../framework/startup", Dir.getwd << "/script"
    chmod 0755, Dir.getwd << "/script/startup"
+   copy rakefile_wd + "/../framework/jruby_startup", Dir.getwd << "/script"
+   chmod 0755, Dir.getwd << "/script/jruby_startup"
    #copy rakefile_wd + "/../framework/xmlrpc_server", Dir.getwd << "/script"
    #chmod 0755, Dir.getwd << "/script/xmlrpc_server"
    copy rakefile_wd + "/../framework/drb_server", Dir.getwd << "/script"
    chmod 0755, Dir.getwd << "/script/drb_server"
+   copy rakefile_wd + "/../framework/generate", Dir.getwd << "/script"
+   chmod 0755, Dir.getwd << "/script/generate"
    copy rakefile_wd + "/../framework/environment.rb", Dir.getwd
 end
 

@@ -9,7 +9,7 @@ Rake::TestTask.new do |test|
 end
 
 # package target
-PKG_VERSION = '0.1.29'
+PKG_VERSION = '0.1.34'
 PKG_FILES = FileList[
     'Rakefile',
     'README.rdoc',
@@ -29,7 +29,7 @@ spec = Gem::Specification.new do |s|
     s.files = PKG_FILES.to_a
     s.autorequire = 'commonthread_env'
     s.bindir = "bin"
-    s.executables = ['commonthread', 'generate']
+    s.executables = ['commonthread']
     s.default_executable = 'commonthread'
     s.has_rdoc = true
     s.extra_rdoc_files = ['README.rdoc']    

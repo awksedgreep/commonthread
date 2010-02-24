@@ -73,7 +73,7 @@ class Producer
    end
    alias kill killall
 
-   # Default event_loop for the thread, replace this
+   # Default event_loop for the thread, overload this
    def event_loop
       if q.class == Queue
          every 5.seconds

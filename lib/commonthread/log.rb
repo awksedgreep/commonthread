@@ -75,6 +75,7 @@ class Log < Queue
 end
 
 # Thread for consuming the Queue and outputting to a medium
+# a medium is defined as any class with a puts method
 # Will rewrite later to use new "Consumer" base class
 class LogConsumer
    attr_accessor :q, :medium, :thread, :shutdown

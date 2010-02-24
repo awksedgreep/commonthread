@@ -6,20 +6,21 @@ require 'drb'
 class Controller
    include DRbUndumped
 
-   DefaultConfig = { :log => $log, :application => 'CommonThread' }
+   DefaultConfig = { :application => 'CommonThread' }
    # Default q is the last queue added
-   attr_accessor :queues, :producers, :consumers, :log, :config, :default_q, :application
+   attr_accessor :queues, :producers, :consumers, :tasks, :log, :config, :default_q, :application
 
    def initialize(config = {})
       @config = DefaultConfig.merge(config)
       @queues = {}
       @producers = {}
       @consumers = {}
+      @tasks = {}
       @log = @config[:log]
       @application = config[:application]
       if @log.nil?
          @log = Log.new(:application => @application, :log_level => Logger::DEBUG)
-         @logconsumer = LogConsumer.new(@log, STDOUT)
+         @logconsumer = LogConsumer.new(@log, File.open(Dir.getwd + '/log/' + @application + '.log', 'a'))
       end
       # Register controller
       $controller = self
@@ -98,7 +99,6 @@ class Controller
       config[:q] = @default_q if config[:q].nil?
       config[:log] = @log if config[:log].nil?
       @log.info("Controller: Adding Producer: #{config[:name]} of Klass #{classname}")
-      config[:num_threads] = 1 if config[:num_threads].nil?
       return nil if config[:name].nil?
       @producers[config[:name]] = classname.new(config)
    end
@@ -179,7 +179,6 @@ class Controller
       config[:q] = @default_q if config[:q].nil?
       config[:log] = @log if config[:log].nil?
       @log.info("Controller: Adding Consumer: #{config[:name]} of Klass #{classname}")
-      config[:num_threads] = 1 if config[:num_threads].nil?
       return nil if config[:name].nil?
       @consumers[config[:name]] = classname.new(config)
    end
@@ -192,7 +191,7 @@ class Controller
    # Delete a named consumer thread group
    def del_consumer(name)
       @log.info("Controller: Deleting Consumer #{name}")
-      @consumer.delete(name)
+      @consumers.delete(name)
    end
 
    # Shutdown named consumer group nice (empties queue first, might take a while)
@@ -243,11 +242,89 @@ class Controller
       res
    end
 
-   # Shutdown all producers and consumers managed by this controller
+   # Add a named task thread group
+   def add_task(name, task)
+      @log.info("Controller: Adding Task: #{name}")
+      @tasks[name] = task
+   end
+   
+   # Start a task thread pool - please make sure you pass a :name
+   # This might be a good place to try an anonymous proc/block passthru(someday)
+   def create_task(classname = nil, config = {})
+      classname = Task if classname.nil?
+      # Set some optional defaults
+      config[:q] = @default_q if config[:q].nil?
+      config[:log] = @log if config[:log].nil?
+      @log.info("Controller: Adding Task: #{config[:name]} of Klass #{classname}")
+      return nil if config[:name].nil?
+      @tasks[config[:name]] = classname.new(config)
+   end
+   
+   # Return handle for task by name
+   def find_task_by_name(name)
+      @tasks[name]
+   end
+   
+   # Delete a named task thread group
+   def del_task(name)
+      @log.info("Controller: Deleting Task #{name}")
+      @tasks.delete(name)
+   end
+   
+   # Shutdown named consumer group nice (empties queue first, might take a while)
+   def shutdown_task(name)
+      @log.info("Controller: Shutting Down Task: #{name}")
+      @tasks[name].shutdown
+   end
+   
+   # Shutdown all task groups (empties q(if q used) first, might take a while)
+   def shutdown_tasks
+      @log.info("Controller: Shutting Down All Tasks")
+      @tasks.each do |key, task|
+         task.shutdown
+      end
+   end
+   
+   # Kill named task immediately, not nice
+   def kill_task(name)
+      @log.info("Controller: Killing Task: #{name}")
+      @tasks[name].kill
+   end
+   
+   # Kill all tasks now, not nice
+   def kill_tasks
+      @log.info("Controller: Killing Tasks")
+      @tasks.each do |key, task|
+         task.kill
+      end
+   end
+   
+   # Get status of all tasks
+   def task_status
+      @log.debug("Controller: Task Status Called")
+      res = {}
+      @tasks.each do |key, value|
+        res[key] = value.status
+      end
+      res
+   end
+   
+   # Get status of all tasks
+   def task_stats
+      @log.debug("Controller: Task Stats Called")
+      res = {}
+      @tasks.each do |key, value|
+         res[key] = value.stats
+      end
+      res
+   end
+   
+   # Shutdown all producers, consumers, and tasks managed by this controller
    def shutdown
       @log.info("Controller: Shutdown Called")
       shutdown_producers
       shutdown_consumers
+      shutdown_tasks
    end
 
    # Kill all producers and consumers immediately, not nice
@@ -255,6 +332,7 @@ class Controller
       @log.info("Controller: Kill Called")
       kill_producers
       kill_consumers
+      kill_tasks
    end
 
 end
