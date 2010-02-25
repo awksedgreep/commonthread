@@ -1,9 +1,12 @@
 
-class <%= classname %> < ActiveRecord::Base
+class <%= classname %>
    # Common options:
-
-   # To establish your own DB params for THIS MODEL ONLY
-   #establish_connection(:database => 'commonthread', :adapter => 'mysql', :username => 'root', :password => '')
-
-   # Any and all ActiveRecord options available in CommonThread
+	#include DataMapper::Resource #<- Uncomment this line if this is a datamapper model
+	
+	# Datamapper field ref: http://datamapper.org/docs/properties
+	# Common datamapper assoc: http://datamapper.org/docs/associations
+	
+	# Warning:  Using ActiveRecord with threads is not recommended, however you should be able to use any thread-safe ORM/data persistence
+	#           library with CommonThread
+	
 end

@@ -30,7 +30,12 @@ class Producer
                if block_given?
                   yield
                else
-                  event_loop
+                  begin
+                     event_loop
+                  rescue Exception => e  
+                     puts e.message  
+                     puts e.backtrace.inspect
+                  end
                end
                @jobs_processed.iterate
             end

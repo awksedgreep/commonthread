@@ -1,13 +1,23 @@
 #!/usr/bin/env ruby
 
+require 'drb'
 pwd = File.dirname(__FILE__)
 require "#{pwd}/../environment"
 
 Dir["#{pwd}/../app/startup/*.rb"].each do |file|
-  puts "Starting up $file"
   load "#{file}"
 end
 
-while 1
-   sleep 1000
+if ARGV[0] == '--help'
+   print "Usage: script/drb_server <bind_ip> <port>"
+   exit
 end
+
+bind_ip = ARGV[0] || 'localhost'
+port = ARGV[1] || 5750
+
+Kernel.const_get(classname).new
+
+DRb.start_service("druby://#{bind_ip}:#{port}", $controller)
+puts "DRuby Service Running on #{bind_ip} port #{port}"
+DRb.thread.join
