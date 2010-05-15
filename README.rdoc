@@ -17,11 +17,11 @@ Features:
 
 == Installation
 
-[sudo] gem install commonthread
+@[sudo] gem install commonthread@
 
 == Framework creation
 
-commonthread [application]
+@commonthread [application]@
 
 == Examples
 
