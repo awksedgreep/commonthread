@@ -1,6 +1,6 @@
-= CommonThread Framework
+h1. CommonThread Framework
 
-== Summary
+h2. Summary
 
 CommonThread is a framework for building data processing and message oriented middleware applications.  It strives to be the Rails for data processing.  It takes the burden of statistics collection and management, logging, thread management, queue management, event loop processing, scheduling, and API creation to make application architecture and design much simpler.  The goal is to provide enterprise integration patterns and endpoints for all your data and message processing needs.
 
@@ -15,19 +15,20 @@ Features:
 * JRuby aware and strongly preferred to avoid GIL
 * Future releases could be deployable via WAR file to standard containers
 
-== Installation
+h2. Installation
 
 @[sudo] gem install commonthread@
 
-== Framework creation
+h2. Framework creation
 
 @commonthread [application]@
 
-== Examples
+h2. Examples
 
 Examples can be found in example directory of gem installation. 
 
-== Notable Changes
+h2. Notable Changes
+
 * 0.1.54 Added ability to add/remove threads to/from running pools
 * 0.1.46 Replaced ActiveRecord with DataMapper for a thread-safe ORM
 * 0.1.12 Task thread manager for background thread tasks that don't fit the producer/consumer model
