@@ -126,3 +126,9 @@ end
 def now
    Time.now
 end
+
+# Utility function for forever.  Not really forever but close enough.  Year 3000. :)  
+# If ppl are still using this software then my bones will surely be impressed with themselves.
+def forever
+   Time.gm(3000, 1, 1)
+end

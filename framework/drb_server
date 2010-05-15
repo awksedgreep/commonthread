@@ -16,8 +16,6 @@ end
 bind_ip = ARGV[0] || 'localhost'
 port = ARGV[1] || 5750
 
-Kernel.const_get(classname).new
-
 DRb.start_service("druby://#{bind_ip}:#{port}", $controller)
 puts "DRuby Service Running on #{bind_ip} port #{port}"
 DRb.thread.join

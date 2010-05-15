@@ -34,7 +34,8 @@ class Controller
       res = {
         :queues    => q_status,
         :producers => producer_status,
-        :consumers => consumer_status
+        :consumers => consumer_status,
+        :tasks     => task_status
       }
    end
    
@@ -43,7 +44,8 @@ class Controller
       @log.debug("Controller: Stats Called")
       res = {
         :producers => producer_stats,
-        :consumers => consumer_stats
+        :consumers => consumer_stats,
+        :tasks     => task_stats
       }
    end
 

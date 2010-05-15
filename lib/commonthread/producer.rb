@@ -6,8 +6,8 @@
 # a queue
 class Producer
 
-   DefaultConfig = { :q => nil, :num_threads => 10 }
-   attr_reader :q, :threads, :num_threads, :jobs_processed, :config
+   DefaultConfig = { :q => nil, :num_threads => 10, :loop_until => forever }
+   attr_reader :q, :threads, :num_threads, :jobs_processed, :config, :loop_until
 
    # standard config options are :q, :num_threads (default => 10), :log (default => $log)
    # pass a block in to override the standard event_loop
@@ -16,6 +16,7 @@ class Producer
       @config = DefaultConfig.merge(config)
       @num_threads = @config[:num_threads]
       @q = @config[:q]
+      @loop_until = @config[:loop_until]
       @log = @config[:log]
       if @log.nil?
          @log = Log.new(:application => "CommonThread", :log_level => 1)
@@ -23,24 +24,8 @@ class Producer
       end
       @jobs_processed = Counter.new
       @threads = []
-      1.upto(@num_threads) do |tid|
-         @threads << Thread.new(tid) do |tid|
-            Thread.current['tid'] = tid
-            while not @shutdown
-               if block_given?
-                  yield
-               else
-                  begin
-                     event_loop
-                  rescue Exception => e  
-                     puts e.message  
-                     puts e.backtrace.inspect
-                  end
-               end
-               @jobs_processed.iterate
-            end
-         end
-      end
+      start_threads(@config[:num_threads])
+      self
    end
    alias start initialize
 
@@ -48,7 +33,7 @@ class Producer
    def status
       @log.debug self.class.to_s + ": Status Called"
       res = []
-      @threads.each do |thread| 
+      @threads.each do |thread|
          lres = thread.status
          lres = "dead" if lres == false
          res << lres
@@ -65,18 +50,82 @@ class Producer
    # shutdown waits for threads to complete current event loop
    def shutdown
       @log.info self.class.to_s + ": Shutting Down"
-      @shutdown = true
+      @threads.each do |thread|
+         thread[:shutdown] = true
+      end
    end
    alias stop shutdown
+   
+   # restart threads after shutdown -- DOES NOT SHUTDOWN FOR YOU, you need to do that and wait for threads to finish processing
+   def restart
+      return true if @shutdown == false
+      @log.info self.class.to_s + ": Restarting after shutdown"
+      @shutdown = false
+      start_threads(@num_threads)
+   end
+   
+   # add threads to the pool
+   def add(number_of_threads_to_add)
+      start_threads(number_of_threads_to_add + @num_threads, @num_threads)
+      @num_threads += number_of_threads_to_add
+   end
+   
+   # reduce the number of threads
+   def remove(number_of_threads_to_remove)
+      (@num_threads - 1).downto(@num_threads - number_of_threads_to_remove) do |tid|
+         @threads[tid][:shutdown] = true
+      end
+      @num_threads -= number_of_threads_to_remove
+   end
 
    # killall kills the threads immediately
    def killall
       @log.info self.class.to_s + ": Killing Threads"
-      @shutdown = true
+      shutdown
       @threads.each do |thread| thread.kill end
       status
    end
    alias kill killall
+   
+   # start x threads
+   def start_threads(start_num_threads = @num_threads, start_index = 0)
+      start_index.upto(start_num_threads - 1) do |tid|
+         create_thread(tid)
+      end
+   end
+   
+   # Create a thread for this thread group
+   def create_thread(tid)
+      @log.debug self.class.to_s + ": Creating thread " + tid.to_s
+      @threads[tid] = Thread.new(tid) do |tid|
+         Thread.current[:tid] = tid
+         Thread.current[:shutdown] = false
+         until Thread.current[:shutdown]
+            error = false
+            begin
+               event_loop
+            rescue Exception => e
+               error = true
+               @log.error e.message
+               @log.error e.backtrace.join("\n")
+            end
+            @jobs_processed.iterate unless error
+            @shutdown = true if Time.now >= @loop_until
+         end
+      end
+   end
+   
+   def refresh_threads
+      refreshed = 0
+      @threads.each_with_index do |thread, index|
+         if thread.status == false
+            @log.warn self.class.to_s + ": Thread #{index} appears to be dead . . refreshing"
+            create_thread(index)
+            refreshed += 1
+         end
+      end
+      @log.debug "Refreshed #{refreshed} threads."
+   end
 
    # Default event_loop for the thread, overload this
    def event_loop
@@ -87,7 +136,7 @@ class Producer
          q.enq res
       else
          every 5.seconds
-         print Thread.current['tid'].to_s << " => " << Time.now.to_s << "\n"
+         print Thread.current[:tid].to_s << " => " << Time.now.to_s << "\n"
       end
    end
 end

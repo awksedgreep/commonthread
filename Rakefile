@@ -9,7 +9,7 @@ Rake::TestTask.new do |test|
 end
 
 # package target
-PKG_VERSION = '0.1.38'
+PKG_VERSION = '0.1.54'
 PKG_FILES = FileList[
     'Rakefile',
     'README.rdoc',
