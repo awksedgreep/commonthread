@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 pwd = File.dirname(__FILE__)
-require "#{pwd}/../environment"
+require_relative "#{pwd}/../environment"
 
 Dir["#{pwd}/../app/startup/*.rb"].each do |file|
   puts "Starting up $file"

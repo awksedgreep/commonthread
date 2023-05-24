@@ -6,8 +6,8 @@
 $controllers = []
 
 # Required modules
-require 'rubygems'
-require 'commonthread'
+#require 'rubygems'
+#require 'commonthread'
 
 # Include files in this order
 dirs = ["config", "app/controllers", "app/apis", "app/models", "app/loggers",
