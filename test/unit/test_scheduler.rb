@@ -1,8 +1,8 @@
 require 'rubygems'
 require 'commonthread_env'
-require 'test/unit'
+require 'minitest/autorun'
 
-class SchedulerTest < Test::Unit::TestCase
+class SchedulerTest < Minitest::Test
   
   def setup
   end

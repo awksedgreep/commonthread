@@ -93,4 +93,9 @@ class LogConsumer
          end
       end
    end
+   
+   def shutdown
+      @shutdown = true
+      @thread.join(1) if @thread && @thread.alive?  # Wait up to 1 second
+   end
 end

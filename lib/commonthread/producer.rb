@@ -11,13 +11,14 @@ class Producer
 
    # standard config options are :q, :num_threads (default => 10), :log (default => $log)
    # pass a block in to override the standard event_loop
-   def initialize(config = {})
+   def initialize(config = {}, &block)
       @shutdown = false
       @config = DefaultConfig.merge(config)
       @num_threads = @config[:num_threads]
       @q = @config[:q]
       @loop_until = @config[:loop_until]
       @log = @config[:log]
+      @event_loop_block = block  # Capture the block if provided
       if @log.nil?
          @log = Log.new(:application => "CommonThread", :log_level => 1)
          @logconsumer = LogConsumer.new(@log, STDOUT)
@@ -50,8 +51,18 @@ class Producer
    # shutdown waits for threads to complete current event loop
    def shutdown
       @log.info self.class.to_s + ": Shutting Down"
-      @threads.each do |thread|
+      @threads.compact.each do |thread|
+         next unless thread.is_a?(Thread)
          thread[:shutdown] = true
+      end
+      # Wake up any sleeping threads so they can check the shutdown flag
+      @threads.compact.each do |thread|
+         next unless thread.is_a?(Thread)
+         begin
+           thread.wakeup if thread.alive? && thread.status == "sleep"
+         rescue ThreadError => e
+           @log.debug "Could not wakeup thread: #{e.message}"
+         end
       end
    end
    alias stop shutdown
@@ -129,7 +140,11 @@ class Producer
 
    # Default event_loop for the thread, overload this
    def event_loop
-      if q.class == Queue
+      # If a block was provided, execute it
+      # Use instance_eval to run in this object's context
+      if @event_loop_block
+         instance_eval(&@event_loop_block)
+      elsif q.class == Queue
          every 5.seconds
          res = Time.now
          @log.debug self.class.to_s + ": Queueing " + res.class.to_s

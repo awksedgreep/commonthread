@@ -20,7 +20,7 @@ class SizedQueue
    include DRbUndumped
    
    def status
-      " Size: " << max.to_s << " Waiting: " << num_waiting.to_s << "  Length: " << length.to_s
+      "Size: " << max.to_s << "  Waiting: " << num_waiting.to_s << "  Length: " << length.to_s
    end
    alias to_s status
 

@@ -1,0 +1,22 @@
+PATH
+  remote: .
+  specs:
+    commonthread (0.1.56-java)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    minitest (5.15.0)
+    rake (13.0.6)
+
+PLATFORMS
+  universal-java-20
+  universal-java-25
+
+DEPENDENCIES
+  commonthread!
+  minitest (~> 5.0)
+  rake (~> 13.0)
+
+BUNDLED WITH
+   2.3.26

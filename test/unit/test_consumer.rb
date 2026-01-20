@@ -1,8 +1,8 @@
 require 'rubygems'
 require 'commonthread_env'
-require 'test/unit'
+require 'minitest/autorun'
 
-class ConsumerTest < Test::Unit::TestCase
+class ConsumerTest < Minitest::Test
   
   def setup
     @log = Log.new(:application => 'CommonThread-Test', :log_level => Logger::DEBUG)
@@ -11,27 +11,30 @@ class ConsumerTest < Test::Unit::TestCase
     10.times do
       @q << Time.now
     end
-    @c = Consumer.new(:log => @log) do
+    @c = Consumer.new(:log => @log, :q => @q) do
       sleep 0.1
       @q.shift
     end
   end
   
   def test_consumer
-    assert_nil @c.q
-    assert @c.num_threads == 10
-    assert @c.threads.length == 10
+    refute_nil @c.q
+    assert_equal @q, @c.q
+    assert_equal 10, @c.num_threads
+    assert_equal 10, @c.threads.length
     assert_kind_of Thread, @c.threads.first
     assert_kind_of Counter, @c.jobs_processed
     assert_kind_of Integer, @c.jobs_processed.to_i
     sleep 0.15
-    assert @c.jobs_processed.to_i == 10
-    assert @q.length == 0
+    assert_equal 10, @c.jobs_processed.to_i
+    assert_equal 0, @q.length
     assert @q.empty?
   end
   
   def teardown
-    @c.shutdown
+    @c.shutdown if @c
+    sleep 0.2  # Give threads time to finish
+    @logconsumer.shutdown if @logconsumer
     @c = nil
     @log = nil
     @logconsumer = nil

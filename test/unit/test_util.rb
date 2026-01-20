@@ -1,8 +1,8 @@
 require 'rubygems'
 require 'commonthread_env'
-require 'test/unit'
+require 'minitest/autorun'
 
-class UtilTest < Test::Unit::TestCase
+class UtilTest < Minitest::Test
   
   def setup
     @counter = Counter.new

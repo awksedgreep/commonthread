@@ -25,7 +25,7 @@ class Controller
       # Register controller
       $controller = self
       trap "TERM", proc { shutdown }
-      trap "KILL", proc { kill }
+      trap "INT", proc { shutdown }  # Changed from KILL to INT (Ctrl+C)
    end
 
    # Status for all producers, consumers, and queues managed by this controller

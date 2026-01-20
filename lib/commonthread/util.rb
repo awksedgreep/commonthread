@@ -3,8 +3,7 @@
 # Add trim . . . ruby oversight
 class String
    def trim
-      self.gsub!(/^\s+/, '')
-      self.gsub!(/\s+$/, '')
+      self.gsub(/^\s+/, '').gsub(/\s+$/, '')
    end
 
    def to_time

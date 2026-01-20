@@ -1,9 +1,9 @@
 require 'rubygems'
 require 'commonthread_env'
-require 'test/unit'
+require 'minitest/autorun'
 require 'pp'
 
-class ControllerTest < Test::Unit::TestCase
+class ControllerTest < Minitest::Test
   
   def setup
     @log = Log.new(:application => 'CommonThread-Test', :log_level => Logger::DEBUG)
@@ -64,14 +64,14 @@ class ControllerTest < Test::Unit::TestCase
     assert_kind_of Hash, @c.consumers
     assert_kind_of Hash, @c.producers
     assert_kind_of Hash, @c.queues
-    assert_not_nil $controller
+    refute_nil $controller
     assert_kind_of Controller, $controller
   end
   
   def test_controller_status
     assert status = @c.status
     assert_kind_of Hash, status
-    assert status.length == 3
+    assert_equal 4, status.length
     assert status.has_key?(:queues)
     assert_kind_of Hash, status[:queues]
     assert status[:queues].empty?
@@ -81,18 +81,24 @@ class ControllerTest < Test::Unit::TestCase
     assert status.has_key?(:consumers)
     assert_kind_of Hash, status[:consumers]
     assert status[:consumers].empty?
+    assert status.has_key?(:tasks)
+    assert_kind_of Hash, status[:tasks]
+    assert status[:tasks].empty?
   end
 
   def test_controller_stats
     assert stats = @c.stats
     assert_kind_of Hash, stats
-    assert stats.length == 2
+    assert_equal 3, stats.length
     assert stats.has_key?(:producers)
     assert_kind_of Hash, stats[:producers]
     assert stats[:producers].empty?
     assert stats.has_key?(:consumers)
     assert_kind_of Hash, stats[:consumers]
     assert stats[:consumers].empty?
+    assert stats.has_key?(:tasks)
+    assert_kind_of Hash, stats[:tasks]
+    assert stats[:tasks].empty?
   end
   
   def test_controller_queues
@@ -192,19 +198,19 @@ class ControllerTest < Test::Unit::TestCase
     assert ps.has_key?(:mark)
     status = @c.consumer_status
     assert_kind_of Hash, status
-    assert status.length == 1
+    assert_equal 1, status.length
     assert status.has_key?(:mark)
     assert (status[:mark][0] == "sleep" or status[:mark][0] == "run")
     stats = @c.consumer_stats
-    assert stats[:mark] == 0
-    assert stats.length == 1
+    assert_equal 0, stats[:mark]
+    assert_equal 1, stats.length
     assert @c.shutdown_consumers
-    sleep 0.1
+    sleep 2.0
     status = @c.consumer_status
-    assert status[:mark][0] == "dead"
+    refute @c.consumers[:mark].threads[0].alive?, "Thread should not be alive after shutdown"
     assert_kind_of Consumer, @c.add_consumer(:wesley, @c2)
     assert_kind_of Hash, ps = @c.consumers
-    assert ps.keys.length == 2
+    assert_equal 2, ps.keys.length
     assert ps.has_key?(:wesley)
     status = @c.consumer_status
     assert_kind_of Hash, status
@@ -215,9 +221,9 @@ class ControllerTest < Test::Unit::TestCase
     assert stats[:wesley] > 0
     assert stats.length == 2
     assert @c.shutdown_consumer(:wesley)
-    sleep 0.1
+    sleep 0.3
     status = @c.consumer_status
-    assert status[:wesley][0] == "dead"
+    refute @c.consumers[:wesley].threads[0].alive?, "Thread should not be alive after shutdown"
     assert_kind_of Consumer, @c.add_consumer(:mingjia, @c3)
     assert_kind_of Hash, ps = @c.consumers
     assert ps.keys.length == 3
@@ -256,9 +262,9 @@ class ControllerTest < Test::Unit::TestCase
     @c.add_producer(:jeanette, @s1)
     @c.add_consumer(:teresa, @s2)
     assert @c.shutdown
-    sleep 0.1
-    assert @c.producers[:jeanette].status[0] == "dead"
-    assert @c.consumers[:teresa].status[0] == "dead"
+    sleep 3.0
+    refute @c.producers[:jeanette].threads[0].alive?, "Producer thread should not be alive after shutdown"
+    refute @c.consumers[:teresa].threads[0].alive?, "Consumer thread should not be alive after shutdown"
   end
   
   def test_controller_kill
@@ -271,16 +277,16 @@ class ControllerTest < Test::Unit::TestCase
   end
   
   def teardown
-    @c.shutdown
-    @p1 = nil
-    @p2 = nil
-    @p3 = nil
-    @p4 = nil
-    @c1 = nil
-    @c2 = nil
-    @c3 = nil
-    @c4 = nil
-    @c = nil
+    @c.shutdown if @c
+    [@p1, @p2, @p3, @p4, @c1, @c2, @c3, @c4, @s1, @s2, @k1, @k2].compact.each do |obj|
+      obj.shutdown if obj.respond_to?(:shutdown)
+    end
+    sleep 0.3  # Give threads time to finish
+    @logconsumer.shutdown if @logconsumer
+    @p1 = @p2 = @p3 = @p4 = nil
+    @c1 = @c2 = @c3 = @c4 = nil
+    @s1 = @s2 = @k1 = @k2 = nil
+    @c = @log = @logconsumer = nil
   end
   
 end

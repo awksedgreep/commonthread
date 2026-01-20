@@ -1,8 +1,8 @@
 require 'rubygems'
 require 'commonthread_env'
-require 'test/unit'
+require 'minitest/autorun'
 
-class QueueTest < Test::Unit::TestCase
+class QueueTest < Minitest::Test
   
   def setup
     @q = Queue.new
