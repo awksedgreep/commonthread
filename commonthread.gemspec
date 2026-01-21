@@ -1,5 +1,5 @@
 # package target
-PKG_VERSION = '0.1.56'
+PKG_VERSION = '0.1.57'
 
 Gem::Specification.new do |s|
     s.platform = 'java'

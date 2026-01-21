@@ -2,6 +2,10 @@
 
 #Thread.abort_on_exception = true
 
+# Import Java's AtomicBoolean for thread-safe shutdown signaling
+require 'java'
+java_import 'java.util.concurrent.atomic.AtomicBoolean'
+
 # Producers generally grab stuff from a model or service and put them in
 # a queue
 class Producer
@@ -12,7 +16,7 @@ class Producer
    # standard config options are :q, :num_threads (default => 10), :log (default => $log)
    # pass a block in to override the standard event_loop
    def initialize(config = {}, &block)
-      @shutdown = false
+      @shutdown_flag = AtomicBoolean.new(false)  # Thread-safe shutdown flag
       @config = DefaultConfig.merge(config)
       @num_threads = @config[:num_threads]
       @q = @config[:q]
@@ -51,27 +55,37 @@ class Producer
    # shutdown waits for threads to complete current event loop
    def shutdown
       @log.info self.class.to_s + ": Shutting Down"
-      @threads.compact.each do |thread|
-         next unless thread.is_a?(Thread)
-         thread[:shutdown] = true
+      @shutdown_flag.set(true)  # Atomically set shutdown flag (visible to all threads)
+      
+      # Push sentinel values to wake up threads blocked on queue operations
+      # One sentinel per thread ensures all threads wake up
+      if @q.is_a?(Queue)
+         @num_threads.times { @q.enq(:shutdown) }
       end
-      # Wake up any sleeping threads so they can check the shutdown flag
+      
+      # Wake up any sleeping threads
       @threads.compact.each do |thread|
          next unless thread.is_a?(Thread)
          begin
-           thread.wakeup if thread.alive? && thread.status == "sleep"
+           thread.wakeup if thread.alive?  # Wake regardless of status
          rescue ThreadError => e
            @log.debug "Could not wakeup thread: #{e.message}"
          end
+      end
+      
+      # Wait for threads to actually terminate
+      @threads.compact.each do |thread|
+         next unless thread.is_a?(Thread)
+         thread.join(2.0) if thread.alive?  # Wait up to 2 seconds per thread
       end
    end
    alias stop shutdown
    
    # restart threads after shutdown -- DOES NOT SHUTDOWN FOR YOU, you need to do that and wait for threads to finish processing
    def restart
-      return true if @shutdown == false
+      return true if !@shutdown_flag.get
       @log.info self.class.to_s + ": Restarting after shutdown"
-      @shutdown = false
+      @shutdown_flag.set(false)
       start_threads(@num_threads)
    end
    
@@ -110,18 +124,20 @@ class Producer
       @log.debug self.class.to_s + ": Creating thread " + tid.to_s
       @threads[tid] = Thread.new(tid) do |tid|
          Thread.current[:tid] = tid
-         Thread.current[:shutdown] = false
-         until Thread.current[:shutdown]
+         until @shutdown_flag.get  # Atomically read shutdown flag (guaranteed visibility)
             error = false
+            result = nil
             begin
-               event_loop
+               result = event_loop
             rescue Exception => e
                error = true
                @log.error e.message
                @log.error e.backtrace.join("\n")
             end
+            # Break if event_loop returned shutdown sentinel
+            break if result == :shutdown
             @jobs_processed.iterate unless error
-            @shutdown = true if Time.now >= @loop_until
+            @shutdown_flag.set(true) if Time.now >= @loop_until
          end
       end
    end

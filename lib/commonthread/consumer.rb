@@ -8,8 +8,12 @@ class Consumer < Producer
    # Example event loop, this should be replaced with either a block,
    # or overloading
    def event_loop
-      if q.class == Queue
+      # If a block was provided, execute it (same as Producer)
+      if @event_loop_block
+         instance_eval(&@event_loop_block)
+      elsif q.class == Queue
          res = q.deq
+         return :shutdown if res == :shutdown  # Exit gracefully on shutdown sentinel
          @log.debug "Consumer: Processing " + res.class.to_s
          print "#{res}\n"
       else
@@ -24,8 +28,12 @@ class Job < Producer
    # Example event loop, this should be replaced with either a block,
    # or overloading
    def event_loop
-      if q.class == Queue
+      # If a block was provided, execute it (same as Producer)
+      if @event_loop_block
+         instance_eval(&@event_loop_block)
+      elsif q.class == Queue
          res = q.deq
+         return :shutdown if res == :shutdown  # Exit gracefully on shutdown sentinel
          @log.debug "Consumer: Processing " + res.class.to_s
          print "#{res}\n"
       else
